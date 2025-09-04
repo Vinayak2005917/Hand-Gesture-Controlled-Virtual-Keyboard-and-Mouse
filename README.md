@@ -34,12 +34,14 @@ Gesture data files required (relative paths):
 - `Gesture data/palm_data.txt`
 - `Gesture data/fist_data.txt`
 - `Gesture data/peace_sign_data.txt`
+- `Gesture data/ok_symbol_data.txt`
 
 ## Modes and controls
 
 Mode selection (shown on start or after reset):
 - Palm → Mouse mode
-- Fist → Keyboard mode
+- Fist → Rotating Keyboard mode
+- OK sign → QWERTY Keyboard mode
 - Peace sign → Reset to None
 
 Mouse mode (thumb vs. other fingertips):
@@ -49,14 +51,20 @@ Mouse mode (thumb vs. other fingertips):
 - Thumb + Pinky tip pinch → Scroll up
 - Thumb + Pinky middle joint pinch → Scroll down
 
-Keyboard mode (rotating disk of letters):
+Rotating keyboard mode (circular letters):
 - Thumb + Index pinch → Rotate counterclockwise
 - Thumb + Pinky pinch → Rotate clockwise
 - Thumb + Middle pinch → Select current highlighted (leftmost) letter and type it
 
+QWERTY keyboard mode (on-screen keys):
+- Hover the index fingertip over a key; push towards the camera (Z below threshold) and hold for a short time to click
+- Special keys: Backspace, Space, Enter
+- Toggle case with the lower/UPPER key
+- Typed text is shown on screen and sent to the active OS window via PyAutoGUI
+
 ## Files
 - `Main.py` — Streamlit app loop, mode handling, camera/UI.
-- `utils.py` — Gesture detection, mouse controller, and circular keyboard logic.
+- `utils.py` — Gesture detection, mouse controller, rotating (circular) keyboard, and QWERTY keyboard logic.
 
 ## Notes
 - Screen size is auto-detected via PyAutoGUI; multi-monitor setups may behave differently.

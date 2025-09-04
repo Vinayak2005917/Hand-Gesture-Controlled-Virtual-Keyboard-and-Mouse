@@ -290,3 +290,114 @@ def keyboard_disk(img, landmarks, state, cx, cy, radius=200):
 
     return img, state
 
+def keyboard_qwerty(img, landmarks, state, cz_threshold=-0.1, hold_frames=12):
+    if "buttons" not in state:
+        # --- Create keyboard buttons ---
+        class Button:
+            def __init__(self, x, y, w, h, label):
+                self.x, self.y, self.w, self.h = x, y, w, h
+                self.label = label
+                self.color = (200, 200, 200)
+                self.counter = 0
+                self.active = False
+
+            def draw(self, img):
+                cv.rectangle(img, (self.x, self.y), (self.x + self.w, self.y + self.h), self.color, -1)
+                cv.rectangle(img, (self.x, self.y), (self.x + self.w, self.y + self.h), (0, 0, 0), 2)
+                cv.putText(img, self.label, (self.x + 10, self.y + self.h - 15),
+                           cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+
+            def is_inside(self, px, py):
+                return self.x < px < self.x + self.w and self.y < py < self.y + self.h
+
+        keys = [
+            list("QWERTYUIOP"),
+            list("ASDFGHJKL"),
+            list("ZXCVBNM") + ["lower"],
+        ]
+        keys_spl = [
+            ["Backspace","    Space    ","Enter"]
+        ]
+
+        buttons = []
+        start_x, start_y = 10, 20
+        key_w, key_h = 60, 60
+        gap = 10
+
+        for row_idx, row in enumerate(keys):
+            for col_idx, key in enumerate(row):
+                w = 130 if key == "lower" else 60
+                x = start_x + col_idx * (key_w + gap)
+                y = start_y + row_idx * (key_h + gap)
+                buttons.append(Button(x, y, w, key_h, key))
+
+        start_x, start_y = 10, 225
+        key_w, key_h = 190, 50
+        for row_idx, row in enumerate(keys_spl):
+            for col_idx, key in enumerate(row):
+                if key == "    Space    ":
+                    key_w = 290
+                    start_x -= 100
+                elif key == "Enter":
+                    key_w = 125
+                    start_x += 330
+                x = start_x + col_idx * (key_w + gap)
+                y = start_y + row_idx * (key_h + gap)
+                buttons.append(Button(x, y, key_w, key_h, key))
+
+        state["buttons"] = buttons
+        state["typed"] = ""
+
+    buttons = state["buttons"]
+
+    # Draw buttons and typed text
+    for btn in buttons:
+        btn.draw(img)
+    cv.putText(img, state["typed"], (10, 300), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+
+    if landmarks is None:
+        return img, state
+
+    # Use index fingertip for interaction
+    lm = landmarks[8]
+    h, w, _ = img.shape
+    cx, cy, cz = int(lm.x * w), int(lm.y * h), lm.z
+    cv.circle(img, (cx, cy), 10, (0, 0, 255), -1)
+    cv.putText(img, f"Z: {cz:.2f}", (50, 400), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
+    # Check button clicks with debounce
+    for btn in buttons:
+        if btn.is_inside(cx, cy) and cz < cz_threshold:
+            btn.color = (0, 255, 0)
+            btn.counter += 1
+            if btn.counter == hold_frames:
+                if btn.label == "Backspace":
+                    pyautogui.press("backspace")
+                    state["typed"] = state["typed"][:-1]
+                elif btn.label == "Enter":
+                    pyautogui.press("enter")
+                    state["typed"] += "\n"
+                elif btn.label == "    Space    ":
+                    pyautogui.press(" ")
+                    state["typed"] += " "
+                elif btn.label == "lower":
+                    for b in buttons:
+                        if len(b.label) == 1:
+                            b.label = b.label.lower()
+                    btn.label = "UPPER"
+                elif btn.label == "UPPER":
+                    for b in buttons:
+                        if len(b.label) == 1:
+                            b.label = b.label.upper()
+                    btn.label = "lower"
+                else:
+                    pyautogui.typewrite(btn.label.strip())
+                    state["typed"] += btn.label.strip()
+                btn.active = True
+        else:
+            btn.color = (200, 200, 200)
+            btn.counter = 0
+            btn.active = False
+
+    return img, state
+
