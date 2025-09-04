@@ -11,7 +11,8 @@ hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.7, min_tracki
 mp_draw = mp.solutions.drawing_utils
 
 # Streamlit setup
-st.title("🖐 Hand Tracking with Gesture Modes (Streamlit + Mediapipe)")
+st.title("Hand Tracking for Keyboard and Mouse Control")
+st.write("This Product is still under development so stability is not guaranteed.")
 stframe = st.empty()
 
 # Camera
@@ -33,13 +34,38 @@ pTime = 0
 tipIds = [4, 8, 12, 16, 20]
 tolerance = 0.075
 similarity_threshold = 0.75
+    
+
+st.sidebar.write("This is a real-time hand gesture controlled keyboard and mouse application.")
+st.sidebar.markdown("""## Modes and controls
+
+Mode selection (shown on start or after reset):
+- Palm → Mouse mode
+- Fist → Keyboard mode
+- Peace sign → Reset to None
+
+Mouse mode (thumb vs. other fingertips):
+- Thumb + Index pinch → Grab/drag cursor; move hand to move cursor
+- Thumb + Middle pinch → Left click
+- Thumb + Ring pinch → Right click
+- Thumb + Pinky tip pinch → Scroll up
+- Thumb + Pinky middle joint pinch → Scroll down
+
+Keyboard mode (rotating disk of letters):
+- Thumb + Index pinch → Rotate counterclockwise
+- Thumb + Pinky pinch → Rotate clockwise
+- Thumb + Middle pinch → Select current highlighted (leftmost) letter and type it
+    """)
+
+
+user_input = st.text_input("Input Field to test keyboard", "")
+
 
 while True:
     ret, img = cap.read()
     if not ret:
         st.write("⚠️ No camera feed detected")
         break
-
     img = cv2.flip(img, 1)
     imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     results = hands.process(imgRGB)
